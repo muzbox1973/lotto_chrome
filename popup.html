@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로또 예측 분석기</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>로또 예측 분석기</h1>
+      <p class="subtitle">통계 기반 번호 추천</p>
+    </header>
+
+    <div class="control-panel">
+      <div class="input-group">
+        <label for="roundCount">분석 회차 수:</label>
+        <select id="roundCount">
+          <option value="10">최근 10회</option>
+          <option value="20" selected>최근 20회</option>
+          <option value="50">최근 50회</option>
+          <option value="100">최근 100회</option>
+        </select>
+      </div>
+      <button id="fetchData" class="btn btn-primary">데이터 수집 및 분석</button>
+    </div>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p>데이터를 수집하고 분석 중입니다...</p>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+
+    <div id="results" class="results hidden">
+      <section class="prediction-section">
+        <h2>추천 번호</h2>
+        <div id="predictedNumbers" class="number-display"></div>
+        <p class="disclaimer">※ 이 번호는 통계 기반 추천이며, 당첨을 보장하지 않습니다.</p>
+      </section>
+
+      <section class="analysis-section">
+        <h3>분석 방법</h3>
+        <div class="analysis-tabs">
+          <button class="tab-btn active" data-tab="frequency">빈도 분석</button>
+          <button class="tab-btn" data-tab="hotcold">핫/콜드 분석</button>
+          <button class="tab-btn" data-tab="pattern">패턴 분석</button>
+          <button class="tab-btn" data-tab="statistics">통계 정보</button>
+        </div>
+
+        <div id="frequency" class="tab-content active">
+          <h4>출현 빈도 Top 10</h4>
+          <div id="frequencyChart"></div>
+        </div>
+
+        <div id="hotcold" class="tab-content">
+          <h4>핫 넘버 (최근 자주 나온 번호)</h4>
+          <div id="hotNumbers"></div>
+          <h4>콜드 넘버 (오래 안 나온 번호)</h4>
+          <div id="coldNumbers"></div>
+        </div>
+
+        <div id="pattern" class="tab-content">
+          <h4>번호 패턴 분석</h4>
+          <div id="patternAnalysis"></div>
+        </div>
+
+        <div id="statistics" class="tab-content">
+          <h4>통계 정보</h4>
+          <div id="statisticsInfo"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="lotto-data.js"></script>
+  <script src="lotto-analyzer.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

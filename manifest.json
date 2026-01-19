@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "로또 예측 분석기",
+  "version": "1.0.0",
+  "description": "로또 당첨 번호 통계를 분석하여 예상 번호를 제안하는 확장프로그램",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.dhlottery.co.kr/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

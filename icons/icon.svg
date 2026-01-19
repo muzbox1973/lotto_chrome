@@ -1,0 +1,29 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- 그라디언트 정의 -->
+  <defs>
+    <linearGradient id="ballGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="shine" cx="40%" cy="40%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- 배경 원 (로또 공) -->
+  <circle cx="64" cy="64" r="58" fill="url(#ballGradient)" />
+
+  <!-- 빛 반사 효과 -->
+  <circle cx="64" cy="64" r="58" fill="url(#shine)" />
+
+  <!-- 외곽선 -->
+  <circle cx="64" cy="64" r="58" fill="none" stroke="#5a67d8" stroke-width="2" opacity="0.5" />
+
+  <!-- 숫자 7 (행운의 숫자) -->
+  <text x="64" y="84" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="white" text-anchor="middle">7</text>
+
+  <!-- 작은 별 장식 -->
+  <path d="M 100 28 L 102 34 L 108 34 L 103 38 L 105 44 L 100 40 L 95 44 L 97 38 L 92 34 L 98 34 Z" fill="#ffd700" opacity="0.8" />
+  <path d="M 32 30 L 34 36 L 40 36 L 35 40 L 37 46 L 32 42 L 27 46 L 29 40 L 24 36 L 30 36 Z" fill="#ffd700" opacity="0.8" />
+</svg>
