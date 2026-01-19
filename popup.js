@@ -41,12 +41,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       hideResults();
       fetchButton.disabled = true;
 
+      console.log(`${roundCount}개 회차 데이터 수집 시작...`);
+
       // 데이터 수집
       const data = await dataManager.fetchMultipleRounds(roundCount);
 
+      console.log('수집된 데이터:', data);
+
       if (!data || data.length === 0) {
-        throw new Error('데이터를 가져올 수 없습니다. 인터넷 연결을 확인해주세요.');
+        throw new Error(`데이터를 가져올 수 없습니다.\n\n가능한 원인:\n1. 인터넷 연결 문제\n2. 동행복권 사이트 접근 제한\n3. 아직 추첨되지 않은 회차\n\n브라우저 콘솔(F12)에서 자세한 오류를 확인하세요.`);
       }
+
+      console.log(`${data.length}개 회차 데이터 수집 완료`);
 
       // 데이터 저장
       await dataManager.saveToStorage(data);
