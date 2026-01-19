@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로또 API 테스트</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #667eea;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .info {
+      color: blue;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>로또 API 테스트</h1>
+    <p>동행복권 API가 정상 작동하는지 테스트합니다.</p>
+
+    <div>
+      <button onclick="testSingleRound()">단일 회차 테스트 (1204회)</button>
+      <button onclick="testLatestRound()">최신 회차 찾기</button>
+      <button onclick="testMultipleRounds()">여러 회차 테스트 (최근 5회)</button>
+      <button onclick="clearResult()">결과 지우기</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const API_URL = 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=';
+
+    function log(message, type = 'info') {
+      const result = document.getElementById('result');
+      const span = document.createElement('span');
+      span.className = type;
+      span.textContent = message + '\n';
+      result.appendChild(span);
+      console.log(message);
+    }
+
+    function clearResult() {
+      document.getElementById('result').innerHTML = '';
+    }
+
+    async function testSingleRound() {
+      clearResult();
+      log('=== 단일 회차 테스트 (1204회) ===');
+
+      try {
+        const response = await fetch(API_URL + '1204');
+        log('응답 상태: ' + response.status);
+
+        const data = await response.json();
+        log('응답 데이터:', 'info');
+        log(JSON.stringify(data, null, 2), 'info');
+
+        if (data.returnValue === 'success') {
+          log(`\n당첨 번호: ${data.drwtNo1}, ${data.drwtNo2}, ${data.drwtNo3}, ${data.drwtNo4}, ${data.drwtNo5}, ${data.drwtNo6}`, 'success');
+          log(`보너스 번호: ${data.bnusNo}`, 'success');
+          log(`추첨일: ${data.drwNoDate}`, 'success');
+        } else {
+          log('데이터 없음: ' + data.returnValue, 'error');
+        }
+      } catch (error) {
+        log('오류 발생: ' + error.message, 'error');
+      }
+    }
+
+    async function testLatestRound() {
+      clearResult();
+      log('=== 최신 회차 찾기 ===');
+
+      // 현재 날짜 기준 추정 회차
+      const startDate = new Date('2002-12-07');
+      const today = new Date();
+      const diffTime = Math.abs(today - startDate);
+      const estimatedRound = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+
+      log(`추정 회차: ${estimatedRound}회`);
+
+      // 역으로 검색
+      for (let i = 0; i < 10; i++) {
+        const round = estimatedRound - i;
+        log(`${round}회차 확인 중...`);
+
+        try {
+          const response = await fetch(API_URL + round);
+          const data = await response.json();
+
+          if (data.returnValue === 'success') {
+            log(`\n✓ 최신 회차 발견: ${round}회`, 'success');
+            log(`당첨 번호: ${data.drwtNo1}, ${data.drwtNo2}, ${data.drwtNo3}, ${data.drwtNo4}, ${data.drwtNo5}, ${data.drwtNo6}`, 'success');
+            log(`추첨일: ${data.drwNoDate}`, 'success');
+            return round;
+          }
+        } catch (error) {
+          log(`${round}회차 오류: ${error.message}`, 'error');
+        }
+      }
+
+      log('최신 회차를 찾을 수 없습니다.', 'error');
+    }
+
+    async function testMultipleRounds() {
+      clearResult();
+      log('=== 여러 회차 테스트 (최근 5회) ===');
+
+      // 먼저 최신 회차 찾기
+      const startDate = new Date('2002-12-07');
+      const today = new Date();
+      const diffTime = Math.abs(today - startDate);
+      const estimatedRound = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+
+      let latestRound = null;
+      for (let i = 0; i < 10; i++) {
+        const round = estimatedRound - i;
+        try {
+          const response = await fetch(API_URL + round);
+          const data = await response.json();
+          if (data.returnValue === 'success') {
+            latestRound = round;
+            break;
+          }
+        } catch (error) {
+          // 계속 시도
+        }
+      }
+
+      if (!latestRound) {
+        log('최신 회차를 찾을 수 없습니다.', 'error');
+        return;
+      }
+
+      log(`최신 회차: ${latestRound}회`);
+      log(`${latestRound}회부터 5개 회차 데이터 수집 중...\n`);
+
+      const results = [];
+      for (let i = 0; i < 5; i++) {
+        const round = latestRound - i;
+        try {
+          const response = await fetch(API_URL + round);
+          const data = await response.json();
+
+          if (data.returnValue === 'success') {
+            const numbers = [data.drwtNo1, data.drwtNo2, data.drwtNo3, data.drwtNo4, data.drwtNo5, data.drwtNo6];
+            log(`${round}회 (${data.drwNoDate}): ${numbers.join(', ')} + ${data.bnusNo}`, 'success');
+            results.push(data);
+          }
+        } catch (error) {
+          log(`${round}회 오류: ${error.message}`, 'error');
+        }
+      }
+
+      log(`\n총 ${results.length}개 회차 데이터 수집 완료`, 'success');
+    }
+  </script>
+</body>
+</html>

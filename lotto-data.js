@@ -2,7 +2,8 @@
 
 class LottoDataManager {
   constructor() {
-    this.baseUrl = 'https://www.dhlottery.co.kr/lt645/selectPstLt645Info.do';
+    // JSON API 사용
+    this.apiUrl = 'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=';
   }
 
   /**
@@ -24,19 +25,26 @@ class LottoDataManager {
   }
 
   /**
-   * 특정 회차의 당첨 번호 가져오기
+   * 특정 회차의 당첨 번호 가져오기 (JSON API 사용)
    */
   async fetchRoundData(round) {
     try {
-      const url = `${this.baseUrl}?srchLtEpsd=${round}`;
+      const url = `${this.apiUrl}${round}`;
       const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const html = await response.text();
-      return this.parseHtml(html, round);
+      const data = await response.json();
+
+      // returnValue가 'success'인지 확인
+      if (data.returnValue !== 'success') {
+        console.log(`${round}회차: 아직 추첨되지 않았습니다.`);
+        return null;
+      }
+
+      return this.parseJsonData(data);
     } catch (error) {
       console.error(`${round}회차 데이터 가져오기 실패:`, error);
       return null;
@@ -44,47 +52,24 @@ class LottoDataManager {
   }
 
   /**
-   * HTML 파싱하여 당첨 번호 추출
+   * JSON 데이터 파싱
    */
-  parseHtml(html, round) {
+  parseJsonData(data) {
     try {
-      // HTML에서 당첨 번호 추출
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
+      const numbers = [
+        data.drwtNo1,
+        data.drwtNo2,
+        data.drwtNo3,
+        data.drwtNo4,
+        data.drwtNo5,
+        data.drwtNo6
+      ];
 
-      // 번호가 표시되는 요소 찾기 (실제 웹사이트 구조에 맞게 수정 필요)
-      const numbers = [];
+      const bonusNumber = data.bnusNo;
+      const round = data.drwNo;
+      const drawDate = data.drwNoDate;
 
-      // 당첨번호 추출 (span.ball_645 클래스 사용)
-      const ballElements = doc.querySelectorAll('.num.win .ball_645');
-
-      if (ballElements.length >= 6) {
-        for (let i = 0; i < 6; i++) {
-          const num = parseInt(ballElements[i].textContent.trim());
-          if (!isNaN(num)) {
-            numbers.push(num);
-          }
-        }
-      }
-
-      // 보너스 번호 추출
-      let bonusNumber = null;
-      const bonusElement = doc.querySelector('.num.bonus .ball_645');
-      if (bonusElement) {
-        bonusNumber = parseInt(bonusElement.textContent.trim());
-      }
-
-      // 추첨일 추출
-      const dateElement = doc.querySelector('.desc');
-      let drawDate = '';
-      if (dateElement) {
-        const dateMatch = dateElement.textContent.match(/\d{4}년 \d{2}월 \d{2}일/);
-        if (dateMatch) {
-          drawDate = dateMatch[0];
-        }
-      }
-
-      if (numbers.length === 6) {
+      if (numbers.every(num => !isNaN(num) && num > 0)) {
         return {
           round: round,
           numbers: numbers.sort((a, b) => a - b),
@@ -95,37 +80,59 @@ class LottoDataManager {
 
       return null;
     } catch (error) {
-      console.error('HTML 파싱 오류:', error);
+      console.error('JSON 파싱 오류:', error);
       return null;
     }
+  }
+
+  /**
+   * 최신 유효 회차 찾기 (실제 데이터가 있는 회차)
+   */
+  async findLatestValidRound() {
+    let estimatedRound = await this.getLatestRound();
+
+    // 추정 회차부터 역으로 최대 10회차까지 확인
+    for (let i = 0; i < 10; i++) {
+      const round = estimatedRound - i;
+      const data = await this.fetchRoundData(round);
+      if (data) {
+        console.log(`최신 회차 발견: ${round}회`);
+        return round;
+      }
+    }
+
+    // 찾지 못한 경우 보수적으로 더 이전 회차 반환
+    return estimatedRound - 10;
   }
 
   /**
    * 여러 회차의 데이터 가져오기
    */
   async fetchMultipleRounds(count) {
-    const latestRound = await this.getLatestRound();
-    const promises = [];
+    // 최신 유효 회차 찾기
+    const latestRound = await this.findLatestValidRound();
+    console.log(`${latestRound}회차부터 ${count}개 회차 데이터 수집 시작`);
+
     const results = [];
 
+    // 순차적으로 데이터 가져오기 (병렬보다 안정적)
     for (let i = 0; i < count; i++) {
       const round = latestRound - i;
       if (round > 0) {
-        promises.push(
-          this.fetchRoundData(round).then(data => {
-            if (data) {
-              results.push(data);
-            }
-          })
-        );
+        const data = await this.fetchRoundData(round);
+        if (data) {
+          results.push(data);
+          console.log(`${round}회차 데이터 수집 완료`);
+        } else {
+          console.log(`${round}회차 데이터 없음`);
+        }
       }
     }
-
-    await Promise.all(promises);
 
     // 회차순으로 정렬 (최신순)
     results.sort((a, b) => b.round - a.round);
 
+    console.log(`총 ${results.length}개 회차 데이터 수집 완료`);
     return results;
   }
 
